@@ -72,7 +72,7 @@ class ProjetoControllerTest {
 
     @Test
     void buscarProjeto_QuandoNaoExiste_DeveRetornarNotFound() throws Exception {
-        // CORREÇÃO: Use uma exception específica que resulte em 404
+
         when(projetoService.buscarPorId(1L)).thenThrow(
                 new ProjetoNotFoundException(1L) {
                     // Ou crie uma exception personalizada com @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -111,7 +111,7 @@ class ProjetoControllerTest {
     void criarProjeto_ComDadosInvalidos_DeveRetornarBadRequest() throws Exception {
         ProjetoRequest request = new ProjetoRequest(); // Nome em branco - dados inválidos
 
-        // CORREÇÃO: Configure o mock para lançar exception de validação
+
         when(projetoService.criarProjeto(any(ProjetoRequest.class)))
                 .thenThrow(new IllegalArgumentException("Dados inválidos"));
 

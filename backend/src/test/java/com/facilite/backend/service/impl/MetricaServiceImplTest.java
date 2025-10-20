@@ -94,7 +94,7 @@ class MetricaServiceImplTest {
 
     @Test
     void calcularDiasAtraso_ProjetoAtrasado_DeveRetornarDiasAtraso() {
-        // Arrange - Use datas relativas à data atual
+        // Arrange - datas relativas à data atual
         LocalDate hoje = LocalDate.now();
         LocalDate terminoPrevisto = hoje.minusDays(5);
 

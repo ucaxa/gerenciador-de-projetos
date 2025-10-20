@@ -62,7 +62,6 @@ class ResponsavelServiceImplTest {
         responsavelResponse.setCargo("Desenvolvedor");
     }
 
-    // ... (mantenha todos os testes anteriores que corrigimos)
 
     @Test
     void listarTodos_DeveRetornarListaDeResponsaveis() {

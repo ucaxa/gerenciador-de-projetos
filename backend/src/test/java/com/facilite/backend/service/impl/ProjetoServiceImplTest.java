@@ -216,7 +216,7 @@ class ProjetoServiceImplTest {
 
     @Test
     void excluirProjeto_QuandoProjetoExiste_DeveExcluirComSucesso() {
-        // Arrange - CORRIGIDO: Agora usa findById + delete(entity)
+        // Arrange
         when(projetoRepository.findById(1L)).thenReturn(Optional.of(projeto));
 
         // Act
@@ -229,7 +229,7 @@ class ProjetoServiceImplTest {
 
     @Test
     void excluirProjeto_QuandoProjetoNaoExiste_DeveLancarExcecao() {
-        // Arrange - CORRIGIDO: Agora usa findById
+        // Arrange
         when(projetoRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -249,7 +249,6 @@ class ProjetoServiceImplTest {
         when(metricaService.calcularDiasAtraso(any(Projeto.class))).thenReturn(0);
         when(metricaService.calcularPercentualTempoRestante(any(Projeto.class))).thenReturn(85.0);
 
-        // Configurar projeto com status atualizado
         projeto.setStatus(StatusProjeto.EM_ANDAMENTO);
 
         // Act
