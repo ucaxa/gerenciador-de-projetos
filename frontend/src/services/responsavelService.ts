@@ -1,7 +1,7 @@
 
 import { api } from './api';
-import type {ResponsavelResponse } from '../types/responsavel/reponsavelResponse';
-import type  {ResponsavelRequest} from '../types/responsavel/reponsavelRequest';
+import type {ResponsavelResponse } from '../types/responsavel/responsavelResponse';
+import type  {ResponsavelRequest} from '../types/responsavel/responsavelRequest';
 
 export const responsavelService = {
   listarTodos: (): Promise<ResponsavelResponse[]> => 

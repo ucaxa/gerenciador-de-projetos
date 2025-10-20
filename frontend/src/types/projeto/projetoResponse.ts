@@ -1,6 +1,6 @@
 
 import type { StatusProjeto } from "..";
-import type { ResponsavelResponse } from "../responsavel/reponsavelResponse";
+import type { ResponsavelResponse } from "../responsavel/responsavelResponse";
 
 
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 //import { ProjetoRequest, ProjetoResponse, ResponsavelResponse } from '../../types';
 import type { ProjetoRequest } from 'src/types/projeto/projetoRequest';
 import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
-import type { ResponsavelResponse } from 'src/types/responsavel/reponsavelResponse';
+import type { ResponsavelResponse } from 'src/types/responsavel/responsavelResponse';
 
 import { projetoService } from '../../services/projetoService';
 import { responsavelService } from '../../services/responsavelService';

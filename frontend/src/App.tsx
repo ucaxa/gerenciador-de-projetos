@@ -1,6 +1,7 @@
-// App.tsx
 import React, { useState } from 'react';
 import { KanbanBoard } from './components/Kanban/KanbanBoard';
+import { ProjectList } from './components/Projeto/ProjectList';
+import { ResponsavelList } from './components/Responsavel/ResponsavelList';
 import { ProjectForm } from './components/Projeto/ProjectForm';
 
 type Page = 'kanban' | 'projects' | 'responsibles';
@@ -20,9 +21,9 @@ export const App: React.FC = () => {
       case 'kanban':
         return <KanbanBoard />;
       case 'projects':
-        return <div>Página de Projetos (em desenvolvimento)</div>;
+        return <ProjectList />;
       case 'responsibles':
-        return <div>Página de Responsáveis (em desenvolvimento)</div>; // ✅ CORREÇÃO
+        return <ResponsavelList />;
       default:
         return <KanbanBoard />;
     }
@@ -56,7 +57,7 @@ export const App: React.FC = () => {
               </nav>
             </div>
 
-            {/* Botão de Novo Projeto */}
+            {/* Botão de Novo Projeto (só mostra no Kanban) */}
             {currentPage === 'kanban' && (
               <button
                 onClick={() => setIsCreatingProject(true)}
@@ -84,7 +85,9 @@ export const App: React.FC = () => {
               onSuccess={() => {
                 setIsCreatingProject(false);
                 // Recarregar a página atual se necessário
-                window.location.reload();
+                if (currentPage === 'kanban') {
+                  window.location.reload();
+                }
               }}
             />
           </div>
