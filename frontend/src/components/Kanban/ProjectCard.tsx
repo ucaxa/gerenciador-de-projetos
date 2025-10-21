@@ -1,19 +1,20 @@
 // components/Kanban/ProjectCard.tsx
 import React, { useState } from 'react';
-//import { ProjetoResponse, StatusProjeto } from '../../types/projeto';
-import  type {ProjetoResponse } from 'src/types/projeto/projetoResponse';
+import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
 import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
 
 interface ProjectCardProps {
   projeto: ProjetoResponse;
   statusOptions: StatusProjeto[];
   onStatusChange: (projetoId: number, novoStatus: StatusProjeto) => void;
+  onEdit?: (projeto: ProjetoResponse) => void; // NOVO: callback para edição
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ 
   projeto, 
   statusOptions, 
-  onStatusChange 
+  onStatusChange,
+  onEdit // NOVO
 }) => {
   const [isChangingStatus, setIsChangingStatus] = useState(false);
 
@@ -37,8 +38,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     onStatusChange(projeto.id, novoStatus);
   };
 
+  // NOVO: Handler para clique no card (evita conflito com drag)
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Só abre edição se não foi um clique no dropdown de status
+    if (!(e.target as HTMLElement).closest('.status-dropdown') && onEdit) {
+      onEdit(projeto);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow">
+    <div 
+      className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" // NOVO: cursor-pointer
+      onClick={handleCardClick} // NOVO: clique no card
+    >
       {/* Cabeçalho do Card */}
       <div className="flex justify-between items-start mb-3">
         <h4 className="font-semibold text-gray-800 text-sm line-clamp-2 flex-1">
@@ -46,9 +58,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </h4>
         
         {/* Dropdown de Status */}
-        <div className="relative">
+        <div className="relative status-dropdown"> {/* NOVO: classe para identificar */}
           <button
-            onClick={() => setIsChangingStatus(!isChangingStatus)}
+            onClick={(e) => {
+              e.stopPropagation(); // NOVO: evita propagação para o card
+              setIsChangingStatus(!isChangingStatus);
+            }}
             className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(projeto.status)}`}
           >
             {projeto.status.replace('_', ' ')}
@@ -59,7 +74,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               {statusOptions.map(status => (
                 <button
                   key={status}
-                  onClick={() => handleStatusSelect(status)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // NOVO: evita propagação
+                    handleStatusSelect(status);
+                  }}
                   className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
                 >
                   {status.replace('_', ' ')}
@@ -70,6 +88,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </div>
 
+      {/* Restante do código permanece igual */}
       {/* Responsáveis */}
       {projeto.responsaveis && projeto.responsaveis.length > 0 && (
         <div className="mb-2">

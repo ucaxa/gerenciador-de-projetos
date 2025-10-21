@@ -1,16 +1,17 @@
 // components/Kanban/KanbanBoard.tsx
 import React, { useState, useEffect } from 'react';
-//import { ProjetoResponse, StatusProjeto } from '../../types/projeto';
-import  type {ProjetoResponse } from 'src/types/projeto/projetoResponse';
+import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
 import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
-
 import { projetoService } from '../../services/projetoService';
 import { KanbanColumn } from './KanbanColumn';
+import { ProjectForm } from '../Projeto/ProjectForm'; // NOVO: import do formulário
 
 export const KanbanBoard: React.FC = () => {
   const [projetos, setProjetos] = useState<ProjetoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingProjeto, setEditingProjeto] = useState<ProjetoResponse | null>(null); // NOVO: estado para edição
+  const [showForm, setShowForm] = useState(false); // NOVO: controle do modal
 
   // Colunas do Kanban
   const columns = [
@@ -68,6 +69,24 @@ export const KanbanBoard: React.FC = () => {
     );
   };
 
+  // NOVO: Handler para edição de projeto
+  const handleEditProjeto = (projeto: ProjetoResponse) => {
+    setEditingProjeto(projeto);
+    setShowForm(true);
+  };
+
+  // NOVO: Handler para fechar o formulário
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingProjeto(null);
+  };
+
+  // NOVO: Handler para sucesso na edição/criação
+  const handleFormSuccess = () => {
+    carregarProjetos(); // Recarrega os projetos
+    handleCloseForm();
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -103,6 +122,7 @@ export const KanbanBoard: React.FC = () => {
             key={column.id}
             column={column}
             onStatusChange={handleStatusChange}
+            onEdit={handleEditProjeto} // NOVO: passando callback de edição
           />
         ))}
       </div>
@@ -116,6 +136,19 @@ export const KanbanBoard: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* NOVO: Modal do Formulário */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <ProjectForm
+              projeto={editingProjeto || undefined}
+              onClose={handleCloseForm}
+              onSuccess={handleFormSuccess}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

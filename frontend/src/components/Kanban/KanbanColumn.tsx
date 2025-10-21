@@ -1,7 +1,6 @@
 // components/Kanban/KanbanColumn.tsx
 import React from 'react';
-//import { ProjetoResponse, StatusProjeto } from '../../types/projeto';
-import  type {ProjetoResponse } from 'src/types/projeto/projetoResponse';
+import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
 import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
 import { projetoService } from '../../services/projetoService';
 import { ProjectCard } from './ProjectCard';
@@ -14,11 +13,13 @@ interface KanbanColumnProps {
     projetos: ProjetoResponse[];
   };
   onStatusChange: (projetoId: number, novoStatus: StatusProjeto) => void;
+  onEdit?: (projeto: ProjetoResponse) => void; // NOVO: callback para edição
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({ 
   column, 
-  onStatusChange
+  onStatusChange,
+  onEdit // NOVO
 }) => {
   const getStatusOptions = (currentStatus: StatusProjeto): StatusProjeto[] => {
     const allStatus: StatusProjeto[] = ['A_INICIAR', 'EM_ANDAMENTO', 'ATRASADO', 'CONCLUIDO'];
@@ -66,6 +67,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               projeto={projeto}
               statusOptions={getStatusOptions(projeto.status)}
               onStatusChange={handleStatusTransition}
+              onEdit={onEdit} // NOVO: passando callback de edição
             />
           ))
         )}
