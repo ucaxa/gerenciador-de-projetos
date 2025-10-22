@@ -21,8 +21,16 @@ export const projetoService = {
     api.delete(`/projetos/${id}`),
 
   // Kanban e Status
-  listarPaginado: (page: number = 0, size: number = 10): Promise<{ content: ProjetoResponse[] }> => 
-    api.get(`/projetos/paginado?page=${page}&size=${size}`).then(response => response.data),
+  listarPaginado: (page: number = 0, size: number = 10): Promise<{ 
+  content: ProjetoResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}> => 
+  api.get(`/projetos/paginado?page=${page}&size=${size}`).then(response => response.data),
 
   transicionarStatus: (id: number, novoStatus: StatusProjeto): Promise<ProjetoResponse> => 
     api.patch(`/projetos/${id}/status/${novoStatus}`).then(response => response.data),

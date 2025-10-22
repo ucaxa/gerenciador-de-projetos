@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import type  {StatusProjeto} from 'src/types/projeto/statusprojeto';
+import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
 import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
 import { projetoService } from '../../services/projetoService';
 import { ProjectFilters } from './ProjectFilters';
-import {ProjectTable} from './ProjectTable';
-//import { ProjectFilters } from './ProjectFilters';
+import { ProjectTable } from './ProjectTable';
+import { Pagination } from '../Pagination/Pagination';
 
 export const ProjectList: React.FC = () => {
   const [projetos, setProjetos] = useState<ProjetoResponse[]>([]);
@@ -12,17 +12,27 @@ export const ProjectList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Estados de paginação
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+
   const [filters, setFilters] = useState({
     status: '' as StatusProjeto | '',
     search: '',
   });
 
-  const carregarProjetos = async () => {
+  const carregarProjetos = async (pageNum: number = page) => {
     try {
       setLoading(true);
-      const data = await projetoService.listarTodos();
-      setProjetos(data);
-      setFilteredProjetos(data);
+      const response = await projetoService.listarPaginado(pageNum, pageSize) as any;
+      
+      // Ajuste conforme a estrutura real da resposta do backend
+      const projetosData = response.content || response.projetos || response || [];
+      const total = response.totalElements || response.total || projetosData.length;
+      
+      setProjetos(projetosData);
+      setTotalElements(total);
       setError(null);
     } catch (err) {
       setError('Erro ao carregar projetos');
@@ -34,9 +44,9 @@ export const ProjectList: React.FC = () => {
 
   useEffect(() => {
     carregarProjetos();
-  }, []);
+  }, [page, pageSize]);
 
-  // Aplicar filtros
+  // Aplicar filtros no frontend
   useEffect(() => {
     let resultado = projetos;
 
@@ -48,7 +58,7 @@ export const ProjectList: React.FC = () => {
       const searchLower = filters.search.toLowerCase();
       resultado = resultado.filter(p => 
         p.nome.toLowerCase().includes(searchLower) ||
-        p.responsaveis.some(r => r.nome.toLowerCase().includes(searchLower))
+        p.responsaveis?.some(r => r.nome.toLowerCase().includes(searchLower))
       );
     }
 
@@ -57,6 +67,7 @@ export const ProjectList: React.FC = () => {
 
   const handleFilterChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
+    setPage(0); // Reset para primeira página ao filtrar
   };
 
   const handleDelete = async (id: number) => {
@@ -68,6 +79,19 @@ export const ProjectList: React.FC = () => {
         alert('Erro ao excluir projeto: ' + (error as Error).message);
       }
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(0); // Reset para primeira página ao mudar tamanho
+  };
+
+  const handleRefresh = () => {
+    carregarProjetos();
   };
 
   if (loading) {
@@ -83,14 +107,16 @@ export const ProjectList: React.FC = () => {
       <div className="flex justify-center items-center h-64">
         <div className="text-red-600 text-lg">{error}</div>
         <button 
-          onClick={carregarProjetos}
-          className="ml-4 bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={handleRefresh}
+          className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
         >
           Tentar Novamente
         </button>
       </div>
     );
   }
+
+  const totalPages = Math.ceil(totalElements / pageSize);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -103,13 +129,29 @@ export const ProjectList: React.FC = () => {
         filters={filters}
         onFilterChange={handleFilterChange}
         projectCount={filteredProjetos.length}
+        totalCount={totalElements}
       />
 
-      <ProjectTable 
-        projetos={filteredProjetos}
-        onDelete={handleDelete}
-        onRefresh={carregarProjetos}
-      />
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <ProjectTable 
+          projetos={filteredProjetos}
+          onDelete={handleDelete}
+          onRefresh={handleRefresh}
+        />
+        
+        {/* Paginação - só mostra se tiver elementos */}
+        {totalElements > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            itemsName="projetos"
+          />
+        )}
+      </div>
     </div>
   );
 };
