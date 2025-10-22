@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
@@ -52,30 +53,36 @@ public class TransicaoStatusServiceImpl implements TransicaoStatusService {
         }
 
         LocalDate hoje = LocalDate.now();
+        try {
+            switch (statusAtual) {
+                case A_INICIAR:
+                    executarTransicaoDeAIniciar(projeto, novoStatus, hoje);
+                    break;
+                case EM_ANDAMENTO:
+                    executarTransicaoDeEmAndamento(projeto, novoStatus, hoje);
+                    break;
+                case ATRASADO:
+                    executarTransicaoDeAtrasado(projeto, novoStatus, hoje);
+                    break;
+                case CONCLUIDO:
+                    executarTransicaoDeConcluido(projeto, novoStatus, hoje);
+                    break;
+            }
 
-        switch (statusAtual) {
-            case A_INICIAR:
-                executarTransicaoDeAIniciar(projeto, novoStatus, hoje);
-                break;
-            case EM_ANDAMENTO:
-                executarTransicaoDeEmAndamento(projeto, novoStatus, hoje);
-                break;
-            case ATRASADO:
-                executarTransicaoDeAtrasado(projeto, novoStatus, hoje);
-                break;
-            case CONCLUIDO:
-                executarTransicaoDeConcluido(projeto, novoStatus, hoje);
-                break;
+            // Recalcular status após transição (conforme PDF)
+            StatusProjeto statusRecalculado = metricaService.calcularStatus(projeto);
+            projeto.setStatus(statusRecalculado);
+
+            // Recalcular métricas
+            projeto.setDiasAtraso(metricaService.calcularDiasAtraso(projeto));
+            projeto.setPercentualTempoRestante(metricaService.calcularPercentualTempoRestante(projeto));
+        } catch (IllegalArgumentException e) {
+             throw e;
+        } catch (Exception e) {
+              throw new IllegalArgumentException("Erro inesperado durante transição: " + e.getMessage());
         }
-
-        // Recalcular status após transição (conforme PDF)
-        StatusProjeto statusRecalculado = metricaService.calcularStatus(projeto);
-        projeto.setStatus(statusRecalculado);
-
-        // Recalcular métricas
-        projeto.setDiasAtraso(metricaService.calcularDiasAtraso(projeto));
-        projeto.setPercentualTempoRestante(metricaService.calcularPercentualTempoRestante(projeto));
     }
+
 
     @Override
     public boolean isTransicaoPermitida(StatusProjeto statusAtual, StatusProjeto novoStatus) {
@@ -144,10 +151,11 @@ public class TransicaoStatusServiceImpl implements TransicaoStatusService {
         switch (novoStatus) {
             case A_INICIAR:
                 // Remove ambos: término realizado e início realizado
-                projeto.setTerminoRealizado(null);
-                projeto.setInicioRealizado(null);
+
                 metricaService.validarTransicaoDeConcluidoParaAIniciar(projeto);
                 metricaService.validarNaoAtrasadoAposRemocao(projeto);
+                projeto.setTerminoRealizado(null);
+                projeto.setInicioRealizado(null);
                 break;
             case EM_ANDAMENTO:
                 // Ação automática: Término Realizado = null

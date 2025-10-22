@@ -27,3 +27,4 @@ export const projetoService = {
   transicionarStatus: (id: number, novoStatus: StatusProjeto): Promise<ProjetoResponse> => 
     api.patch(`/projetos/${id}/status/${novoStatus}`).then(response => response.data),
 };
+

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,11 +83,12 @@ public class ProjetoServiceImpl implements ProjetoService {
         return projetoMapper.toResponseList(projetoRepository.findByStatus(status));
     }
 
-    @Override
+   @Override
     public ProjetoResponse transicionarStatus(Long id, StatusProjeto novoStatus) {
         Projeto projeto = projetoRepository.findById(id)
                 .orElseThrow(() -> new ProjetoNotFoundException(id));
 
+        try{
         transicaoStatusService.executarTransicao(projeto, novoStatus);
         calcularEAtualizarMetricas(projeto);
 
@@ -101,6 +103,11 @@ public class ProjetoServiceImpl implements ProjetoService {
         }
 
         return projetoMapper.toResponse(projetoAtualizado);
+        } catch (IllegalArgumentException e) {
+              throw new IllegalArgumentException(e.getMessage());
+        } catch (Exception e) {
+               throw new IllegalArgumentException("Erro ao transicionar status: " + e.getMessage());
+        }
     }
 
     @Override

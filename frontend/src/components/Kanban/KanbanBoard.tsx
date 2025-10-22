@@ -12,6 +12,7 @@ export const KanbanBoard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingProjeto, setEditingProjeto] = useState<ProjetoResponse | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Colunas do Kanban
   const columns = [
@@ -41,6 +42,12 @@ export const KanbanBoard: React.FC = () => {
     }
   ];
 
+  // Mostrar notificação
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
   // Carregar projetos
   const carregarProjetos = async () => {
     try {
@@ -48,8 +55,10 @@ export const KanbanBoard: React.FC = () => {
       const data = await projetoService.listarTodos();
       setProjetos(data);
       setError(null);
-    } catch (err) {
-      setError('Erro ao carregar projetos');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Erro ao carregar projetos';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
       console.error('Erro:', err);
     } finally {
       setLoading(false);
@@ -77,11 +86,20 @@ export const KanbanBoard: React.FC = () => {
       // Recarrega para garantir que as métricas estão atualizadas
       await carregarProjetos();
       
-    } catch (error) {
+      showNotification(`Status alterado para ${novoStatus.replace('_', ' ').toLowerCase()} com sucesso!`, 'success');
+      
+    } catch (error: any) {
       console.error('Erro na transição:', error);
+      
+      // ✅ CORREÇÃO: Pegar a mensagem personalizada do backend
+      const errorMessage = error.response?.data?.message 
+        || error.message 
+        || 'Erro ao mudar status';
+      
+      showNotification(errorMessage, 'error');
+      
       // Reverte em caso de erro
       await carregarProjetos();
-      alert('Erro ao mudar status: ' + (error as Error).message);
     }
   };
 
@@ -99,6 +117,10 @@ export const KanbanBoard: React.FC = () => {
   const handleFormSuccess = () => {
     carregarProjetos();
     handleCloseForm();
+    showNotification(
+      editingProjeto ? 'Projeto atualizado com sucesso!' : 'Projeto criado com sucesso!', 
+      'success'
+    );
   };
 
   if (loading) {
@@ -115,7 +137,7 @@ export const KanbanBoard: React.FC = () => {
         <div className="text-red-600 text-lg">{error}</div>
         <button 
           onClick={carregarProjetos}
-          className="ml-4 bg-blue-500 text-white px-4 py-2 rounded"
+          className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
         >
           Tentar Novamente
         </button>
@@ -125,6 +147,25 @@ export const KanbanBoard: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Notificação */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex justify-between items-center">
+            <span>{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Quadro Kanban</h1>
         <p className="text-gray-600">Use o dropdown em cada card para mudar o status</p>

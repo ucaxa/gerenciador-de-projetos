@@ -110,6 +110,8 @@ public class MetricaServiceImpl implements MetricaService {
         }
     }
 
+
+
     @Override
     public void validarTransicaoDeEmAndamentoParaAtrasado(Projeto projeto) {
         LocalDate hoje = LocalDate.now();
@@ -175,9 +177,9 @@ public class MetricaServiceImpl implements MetricaService {
         LocalDate hoje = LocalDate.now();
 
         // Deve remover término realizado
-        if (projeto.getTerminoRealizado() == null) {
+        if (projeto.getTerminoRealizado() != null) {
             throw new IllegalArgumentException(
-                    "Término Realizado já está vazio"
+                    "Remova a data de termino realizado"
             );
         }
 
@@ -187,6 +189,7 @@ public class MetricaServiceImpl implements MetricaService {
                     "Ajuste Início Previsto para data > hoje"
             );
         }
+
         if (projeto.getTerminoPrevisto() != null && projeto.getTerminoPrevisto().isBefore(hoje)) {
             throw new IllegalArgumentException(
                     "Ajuste Término Previsto para data > hoje"
