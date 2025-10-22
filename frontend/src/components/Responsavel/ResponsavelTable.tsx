@@ -36,7 +36,7 @@ export const ResponsavelTable: React.FC<ResponsavelTableProps> = ({
     return colors[index];
   };
 
-  const getProjectCountBadge = (count: number) => {
+ /* const getProjectCountBadge = (count: number) => {
     if (count === 0) {
       return 'bg-gray-100 text-gray-600';
     } else if (count <= 2) {
@@ -44,10 +44,10 @@ export const ResponsavelTable: React.FC<ResponsavelTableProps> = ({
     } else {
       return 'bg-blue-100 text-blue-800';
     }
-  };
+  };*/
 
   // Função para verificar se pode excluir (em um sistema real, viria do backend)
-  const podeExcluir = (responsavel: ResponsavelResponse) => {
+  const podeExcluir = (_responsavel: ResponsavelResponse) => {
     // Simulação - em um sistema real, verificar se o responsável tem projetos associados
     return true; // Temporariamente permitindo exclusão de todos
   };
