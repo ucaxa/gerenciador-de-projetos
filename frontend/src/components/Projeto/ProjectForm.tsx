@@ -106,30 +106,28 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
+  e.preventDefault();
+
+  if (!validateForm()) {
+    return;
+  }
+
+  setLoading(true);
+  try {
+    if (projeto) {
+      await projetoService.atualizar(projeto.id, formData);
+    } else {
+      await projetoService.criar(formData); // ✅ Aguarda criação
     }
 
-    setLoading(true);
-    try {
-      if (projeto) {
-        // Editar projeto existente
-        await projetoService.atualizar(projeto.id, formData);
-      } else {
-        // Criar novo projeto
-        await projetoService.criar(formData);
-      }
-      
-      onSuccess();
-    } catch (error) {
-      console.error('Erro ao salvar projeto:', error);
-      alert('Erro ao salvar projeto: ' + (error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    onSuccess(); // ✅ Chama onSuccess após sucesso
+  } catch (error) {
+    console.error('Erro ao salvar projeto:', error);
+    alert('Erro ao salvar projeto: ' + (error as Error).message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="p-6">

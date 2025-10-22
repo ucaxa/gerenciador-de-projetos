@@ -114,14 +114,14 @@ export const KanbanBoard: React.FC = () => {
     setEditingProjeto(null);
   };
 
-  const handleFormSuccess = () => {
-    carregarProjetos();
-    handleCloseForm();
-    showNotification(
-      editingProjeto ? 'Projeto atualizado com sucesso!' : 'Projeto criado com sucesso!', 
-      'success'
-    );
-  };
+  const handleFormSuccess = async () => {
+  await carregarProjetos(); // Atualiza os projetos primeiro
+  handleCloseForm();        // Depois fecha o modal
+  showNotification(
+    editingProjeto ? 'Projeto atualizado com sucesso!' : 'Projeto criado com sucesso!',
+    'success'
+  );
+};
 
   if (loading) {
     return (
