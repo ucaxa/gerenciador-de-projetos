@@ -1,3 +1,4 @@
+// components/Kanban/SortableKanbanColumn.tsx
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -8,13 +9,13 @@ import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
 
 interface SortableKanbanColumnProps {
   column: KanbanColumnType;
-  onStatusChange: (projetoId: number, novoStatus: StatusProjeto) => void;
+  onStatusChange: (projetoId: number, novoStatus: StatusProjeto) => void; // MANTIDO
   onEdit?: (projeto: ProjetoResponse) => void;
 }
 
 export const SortableKanbanColumn: React.FC<SortableKanbanColumnProps> = ({
   column,
-  onStatusChange,
+  onStatusChange, // MANTIDO
   onEdit
 }) => {
   const { isOver, setNodeRef } = useDroppable({
@@ -71,8 +72,8 @@ export const SortableKanbanColumn: React.FC<SortableKanbanColumnProps> = ({
                 key={projeto.id}
                 projeto={projeto}
                 statusOptions={getStatusOptions(projeto.status)}
-                onStatusChange={onStatusChange}
-                onEdit={onEdit} // NOVO: passando callback de edição
+                onStatusChange={onStatusChange} // MANTIDO para botão dropdown
+                onEdit={onEdit}
               />
             ))
           )}

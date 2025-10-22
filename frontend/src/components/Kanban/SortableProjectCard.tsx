@@ -1,3 +1,4 @@
+// components/Kanban/SortableProjectCard.tsx
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -38,17 +39,23 @@ export const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
-      className={`cursor-grab active:cursor-grabbing transition-all duration-200 ${
-        isDragging ? 'shadow-xl z-10' : 'hover:shadow-md'
+      // REMOVIDO: {...listeners} da div principal para não bloquear cliques
+      className={`transition-all duration-200 ${
+        isDragging ? 'shadow-xl z-10 rotate-2' : 'hover:shadow-md'
       }`}
     >
-      <ProjectCard
-        projeto={projeto}
-        statusOptions={statusOptions}
-        onStatusChange={onStatusChange}
-        onEdit={onEdit} // NOVO: propagando o callback
-      />
+      {/* Área de drag separada */}
+      <div 
+        {...listeners} // Aplica listeners apenas nesta área
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <ProjectCard
+          projeto={projeto}
+          statusOptions={statusOptions}
+          onStatusChange={onStatusChange}
+          onEdit={onEdit}
+        />
+      </div>
     </div>
   );
 };

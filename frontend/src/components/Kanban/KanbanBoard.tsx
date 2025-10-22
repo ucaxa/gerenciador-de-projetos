@@ -3,15 +3,15 @@ import React, { useState, useEffect } from 'react';
 import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
 import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
 import { projetoService } from '../../services/projetoService';
+import { ProjectForm } from '../Projeto/ProjectForm';
 import { KanbanColumn } from './KanbanColumn';
-import { ProjectForm } from '../Projeto/ProjectForm'; // NOVO: import do formulário
 
 export const KanbanBoard: React.FC = () => {
   const [projetos, setProjetos] = useState<ProjetoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingProjeto, setEditingProjeto] = useState<ProjetoResponse | null>(null); // NOVO: estado para edição
-  const [showForm, setShowForm] = useState(false); // NOVO: controle do modal
+  const [editingProjeto, setEditingProjeto] = useState<ProjetoResponse | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   // Colunas do Kanban
   const columns = [
@@ -60,30 +60,44 @@ export const KanbanBoard: React.FC = () => {
     carregarProjetos();
   }, []);
 
-  // Atualizar projeto após transição
-  const handleStatusChange = (projetoId: number, novoStatus: StatusProjeto) => {
-    setProjetos(prev => 
-      prev.map(p => 
-        p.id === projetoId ? { ...p, status: novoStatus } : p
-      )
-    );
+  // Handler para mudança de status via dropdown
+  const handleStatusChange = async (projetoId: number, novoStatus: StatusProjeto) => {
+    try {
+      console.log('Mudando status:', projetoId, 'para:', novoStatus);
+      
+      // Atualiza otimisticamente a UI
+      setProjetos(prev => 
+        prev.map(p => 
+          p.id === projetoId ? { ...p, status: novoStatus } : p
+        )
+      );
+
+      await projetoService.transicionarStatus(projetoId, novoStatus);
+      
+      // Recarrega para garantir que as métricas estão atualizadas
+      await carregarProjetos();
+      
+    } catch (error) {
+      console.error('Erro na transição:', error);
+      // Reverte em caso de erro
+      await carregarProjetos();
+      alert('Erro ao mudar status: ' + (error as Error).message);
+    }
   };
 
-  // NOVO: Handler para edição de projeto
+  // Handlers para edição
   const handleEditProjeto = (projeto: ProjetoResponse) => {
     setEditingProjeto(projeto);
     setShowForm(true);
   };
 
-  // NOVO: Handler para fechar o formulário
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingProjeto(null);
   };
 
-  // NOVO: Handler para sucesso na edição/criação
   const handleFormSuccess = () => {
-    carregarProjetos(); // Recarrega os projetos
+    carregarProjetos();
     handleCloseForm();
   };
 
@@ -113,16 +127,17 @@ export const KanbanBoard: React.FC = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Quadro Kanban</h1>
-        <p className="text-gray-600">Gerencie seus projetos de forma visual</p>
+        <p className="text-gray-600">Use o dropdown em cada card para mudar o status</p>
       </div>
 
+      {/* Grid de colunas SEM drag-and-drop por enquanto */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {columns.map(column => (
           <KanbanColumn
             key={column.id}
             column={column}
             onStatusChange={handleStatusChange}
-            onEdit={handleEditProjeto} // NOVO: passando callback de edição
+            onEdit={handleEditProjeto}
           />
         ))}
       </div>
@@ -137,7 +152,7 @@ export const KanbanBoard: React.FC = () => {
         ))}
       </div>
 
-      {/* NOVO: Modal do Formulário */}
+      {/* Modal do Formulário */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">

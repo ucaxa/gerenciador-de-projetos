@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { ProjetoResponse } from '../../types/projeto/projetoResponse';
+import type { StatusProjeto } from '../../types/projeto/statusprojeto';
 import { ProjectForm } from './ProjectForm';
 
 interface ProjectTableProps {
@@ -16,7 +17,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
   const [editingProject, setEditingProject] = useState<ProjetoResponse | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: StatusProjeto) => {
     switch (status) {
       case 'A_INICIAR': return 'bg-blue-100 text-blue-800';
       case 'EM_ANDAMENTO': return 'bg-yellow-100 text-yellow-800';
@@ -24,6 +25,10 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
       case 'CONCLUIDO': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getStatusText = (status: StatusProjeto) => {
+    return status.replace('_', ' ');
   };
 
   const formatDate = (dateString?: string) => {
@@ -64,7 +69,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
                   Responsáveis
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Datas
+                  Datas Previstas
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Métricas
@@ -78,13 +83,17 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
               {projetos.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    Nenhum projeto encontrado
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="text-4xl mb-2">📋</div>
+                      <p>Nenhum projeto encontrado</p>
+                      <p className="text-sm text-gray-400">Tente ajustar os filtros</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 projetos.map((projeto) => (
-                  <tr key={projeto.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={projeto.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{projeto.nome}</div>
                       <div className="text-sm text-gray-500">
                         Criado em {formatDate(projeto.createdAt)}
@@ -92,36 +101,64 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(projeto.status)}`}>
-                        {projeto.status.replace('_', ' ')}
+                        {getStatusText(projeto.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {projeto.responsaveis.slice(0, 2).map(r => r.nome).join(', ')}
-                        {projeto.responsaveis.length > 2 && ` +${projeto.responsaveis.length - 2}`}
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {projeto.responsaveis.slice(0, 3).map(responsavel => (
+                          <span 
+                            key={responsavel.id}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                            title={responsavel.email}
+                          >
+                            {responsavel.nome.split(' ')[0]}
+                          </span>
+                        ))}
+                        {projeto.responsaveis.length > 3 && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
+                            +{projeto.responsaveis.length - 3}
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div>Início: {formatDate(projeto.inicioPrevisto)}</div>
-                      <div>Término: {formatDate(projeto.terminoPrevisto)}</div>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <div className="space-y-1">
+                        <div>
+                          <span className="font-medium">Início:</span> {formatDate(projeto.inicioPrevisto)}
+                        </div>
+                        <div>
+                          <span className="font-medium">Término:</span> {formatDate(projeto.terminoPrevisto)}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div>Atraso: {projeto.diasAtraso || 0}d</div>
-                      <div>Restante: {projeto.percentualTempoRestante.toFixed(1)}%</div>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <div className="space-y-1">
+                        <div>
+                          <span className="font-medium">Atraso:</span> {projeto.diasAtraso || 0}d
+                        </div>
+                        <div>
+                          <span className="font-medium">Restante:</span> {projeto.percentualTempoRestante.toFixed(1)}%
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(projeto)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => onDelete(projeto.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Excluir
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(projeto)}
+                          className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded border border-blue-200 hover:bg-blue-50 transition-colors"
+                          title="Editar projeto"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => onDelete(projeto.id)}
+                          className="text-red-600 hover:text-red-900 px-3 py-1 rounded border border-red-200 hover:bg-red-50 transition-colors"
+                          title="Excluir projeto"
+                        >
+                          Excluir
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

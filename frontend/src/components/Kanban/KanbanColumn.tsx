@@ -2,7 +2,6 @@
 import React from 'react';
 import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
 import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
-import { projetoService } from '../../services/projetoService';
 import { ProjectCard } from './ProjectCard';
 
 interface KanbanColumnProps {
@@ -13,27 +12,17 @@ interface KanbanColumnProps {
     projetos: ProjetoResponse[];
   };
   onStatusChange: (projetoId: number, novoStatus: StatusProjeto) => void;
-  onEdit?: (projeto: ProjetoResponse) => void; // NOVO: callback para edição
+  onEdit?: (projeto: ProjetoResponse) => void;
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({ 
   column, 
   onStatusChange,
-  onEdit // NOVO
+  onEdit
 }) => {
   const getStatusOptions = (currentStatus: StatusProjeto): StatusProjeto[] => {
     const allStatus: StatusProjeto[] = ['A_INICIAR', 'EM_ANDAMENTO', 'ATRASADO', 'CONCLUIDO'];
     return allStatus.filter(status => status !== currentStatus);
-  };
-
-  const handleStatusTransition = async (projetoId: number, novoStatus: StatusProjeto) => {
-    try {
-      await projetoService.transicionarStatus(projetoId, novoStatus);
-      onStatusChange(projetoId, novoStatus);
-    } catch (error) {
-      console.error('Erro na transição:', error);
-      alert('Erro ao mudar status: ' + (error as Error).message);
-    }
   };
 
   return (
@@ -66,8 +55,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               key={projeto.id}
               projeto={projeto}
               statusOptions={getStatusOptions(projeto.status)}
-              onStatusChange={handleStatusTransition}
-              onEdit={onEdit} // NOVO: passando callback de edição
+              onStatusChange={onStatusChange}
+              onEdit={onEdit}
             />
           ))
         )}

@@ -1,5 +1,5 @@
 // components/Kanban/ProjectCard.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { ProjetoResponse } from 'src/types/projeto/projetoResponse';
 import type { StatusProjeto } from 'src/types/projeto/statusprojeto';
 
@@ -7,16 +7,17 @@ interface ProjectCardProps {
   projeto: ProjetoResponse;
   statusOptions: StatusProjeto[];
   onStatusChange: (projetoId: number, novoStatus: StatusProjeto) => void;
-  onEdit?: (projeto: ProjetoResponse) => void; // NOVO: callback para edição
+  onEdit?: (projeto: ProjetoResponse) => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ 
   projeto, 
   statusOptions, 
   onStatusChange,
-  onEdit // NOVO
+  onEdit
 }) => {
   const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const getStatusColor = (status: StatusProjeto) => {
     switch (status) {
@@ -33,50 +34,48 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const handleStatusSelect = (novoStatus: StatusProjeto) => {
-    setIsChangingStatus(false);
-    onStatusChange(projeto.id, novoStatus);
-  };
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsChangingStatus(false);
+      }
+    };
 
-  // NOVO: Handler para clique no card (evita conflito com drag)
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Só abre edição se não foi um clique no dropdown de status
-    if (!(e.target as HTMLElement).closest('.status-dropdown') && onEdit) {
-      onEdit(projeto);
-    }
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div 
-      className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" // NOVO: cursor-pointer
-      onClick={handleCardClick} // NOVO: clique no card
-    >
+    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow">
       {/* Cabeçalho do Card */}
       <div className="flex justify-between items-start mb-3">
-        <h4 className="font-semibold text-gray-800 text-sm line-clamp-2 flex-1">
+        <h4 
+          className="font-semibold text-gray-800 text-sm line-clamp-2 flex-1 cursor-pointer hover:text-blue-600"
+          onClick={() => onEdit?.(projeto)}
+        >
           {projeto.nome}
         </h4>
         
-        {/* Dropdown de Status */}
-        <div className="relative status-dropdown"> {/* NOVO: classe para identificar */}
+        {/* Dropdown de Status - SIMPLES E FUNCIONAL */}
+        <div ref={dropdownRef} className="relative">
           <button
-            onClick={(e) => {
-              e.stopPropagation(); // NOVO: evita propagação para o card
-              setIsChangingStatus(!isChangingStatus);
-            }}
-            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(projeto.status)}`}
+            onClick={() => setIsChangingStatus(!isChangingStatus)}
+            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(projeto.status)} border`}
           >
-            {projeto.status.replace('_', ' ')}
+            {projeto.status.replace('_', ' ')} ▼
           </button>
           
           {isChangingStatus && (
-            <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
               {statusOptions.map(status => (
                 <button
                   key={status}
-                  onClick={(e) => {
-                    e.stopPropagation(); // NOVO: evita propagação
-                    handleStatusSelect(status);
+                  onClick={() => {
+                    setIsChangingStatus(false);
+                    onStatusChange(projeto.id, status);
                   }}
                   className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
                 >
@@ -88,8 +87,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </div>
 
-      {/* Restante do código permanece igual */}
-      {/* Responsáveis */}
+      {/* Restante do conteúdo do card permanece igual */}
       {projeto.responsaveis && projeto.responsaveis.length > 0 && (
         <div className="mb-2">
           <div className="text-xs text-gray-600 mb-1">Responsáveis:</div>
@@ -111,7 +109,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       )}
 
-      {/* Datas */}
       <div className="space-y-1 text-xs text-gray-600">
         {projeto.inicioPrevisto && (
           <div>
@@ -123,14 +120,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <span className="font-medium">Término Previsto:</span> {formatDate(projeto.terminoPrevisto)}
           </div>
         )}
-        {projeto.inicioRealizado && (
-          <div>
-            <span className="font-medium">Início Real:</span> {formatDate(projeto.inicioRealizado)}
-          </div>
-        )}
       </div>
 
-      {/* Métricas */}
       <div className="mt-3 pt-2 border-t border-gray-200">
         <div className="flex justify-between text-xs">
           <div>
@@ -141,7 +132,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         </div>
         
-        {/* Barra de Progresso */}
         <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
           <div 
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
