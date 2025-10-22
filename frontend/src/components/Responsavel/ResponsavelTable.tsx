@@ -1,3 +1,4 @@
+// components/Responsavel/ResponsavelTable.tsx
 import React from 'react';
 import type { ResponsavelResponse } from 'src/types/responsavel/responsavelResponse';
 
@@ -45,6 +46,12 @@ export const ResponsavelTable: React.FC<ResponsavelTableProps> = ({
     }
   };
 
+  // Função para verificar se pode excluir (em um sistema real, viria do backend)
+  const podeExcluir = (responsavel: ResponsavelResponse) => {
+    // Simulação - em um sistema real, verificar se o responsável tem projetos associados
+    return true; // Temporariamente permitindo exclusão de todos
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -61,9 +68,6 @@ export const ResponsavelTable: React.FC<ResponsavelTableProps> = ({
                 Cargo
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Projetos
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Cadastro
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -74,11 +78,16 @@ export const ResponsavelTable: React.FC<ResponsavelTableProps> = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {responsaveis.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={5} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center text-gray-500">
                     <div className="text-4xl mb-3">👥</div>
-                    <p className="text-lg font-medium mb-1">Nenhum responsável cadastrado</p>
-                    <p className="text-sm text-gray-400">Clique em "Novo Responsável" para adicionar</p>
+                    <p className="text-lg font-medium mb-1">Nenhum responsável encontrado</p>
+                    <p className="text-sm text-gray-400">
+                      {responsaveis.length === 0 
+                        ? 'Clique em "Novo Responsável" para adicionar' 
+                        : 'Tente ajustar os filtros'
+                      }
+                    </p>
                   </div>
                 </td>
               </tr>
@@ -115,15 +124,9 @@ export const ResponsavelTable: React.FC<ResponsavelTableProps> = ({
                           {responsavel.cargo}
                         </span>
                       ) : (
-                        <span className="text-gray-400 italic">Não informado</span>
+                        <span className="text-gray-400 italic text-sm">Não informado</span>
                       )}
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {/* Nota: Em um sistema real, isso viria do backend */}
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getProjectCountBadge(responsavel.id % 4)}`}>
-                      {responsavel.id % 4 === 0 ? 'Sem projetos' : `${responsavel.id % 4} projeto(s)`}
-                    </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     <div className="space-y-1">
@@ -139,18 +142,28 @@ export const ResponsavelTable: React.FC<ResponsavelTableProps> = ({
                     <div className="flex space-x-2">
                       <button
                         onClick={() => onEdit(responsavel)}
-                        className="text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors text-sm font-medium flex items-center"
                         title="Editar responsável"
                       >
-                        ✏️ Editar
+                        <span className="mr-1">✏️</span>
+                        Editar
                       </button>
                       <button
                         onClick={() => onDelete(responsavel.id)}
-                        className="text-red-600 hover:text-red-900 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium"
-                        title="Excluir responsável"
-                        disabled={responsavel.id % 4 > 0} // Não permite excluir se tiver projetos
+                        disabled={!podeExcluir(responsavel)}
+                        className={`px-3 py-1.5 rounded-lg border text-sm font-medium flex items-center transition-colors ${
+                          podeExcluir(responsavel)
+                            ? 'text-red-600 border-red-200 hover:bg-red-50 hover:text-red-900'
+                            : 'text-gray-400 border-gray-200 cursor-not-allowed'
+                        }`}
+                        title={
+                          podeExcluir(responsavel) 
+                            ? "Excluir responsável" 
+                            : "Não é possível excluir responsável com projetos associados"
+                        }
                       >
-                        🗑️ Excluir
+                        <span className="mr-1">🗑️</span>
+                        Excluir
                       </button>
                     </div>
                   </td>

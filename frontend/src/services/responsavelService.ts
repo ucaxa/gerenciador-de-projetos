@@ -19,6 +19,18 @@ export const responsavelService = {
   excluir: (id: number): Promise<void> => 
     api.delete(`/responsaveis/${id}`),
 
-  listarPaginado: (page: number = 0, size: number = 10) => 
-    api.get(`/responsaveis/paginado?page=${page}&size=${size}`).then(response => response.data),
+    listarPaginado: (page: number = 0, size: number = 10): Promise<{ 
+    content: ResponsavelResponse[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+  }> => 
+    api.get(`/responsaveis/paginado?page=${page}&size=${size}`).then(response => {
+      console.log('Resposta paginada responsáveis:', response.data);
+      return response.data;
+    }),
+
 };
