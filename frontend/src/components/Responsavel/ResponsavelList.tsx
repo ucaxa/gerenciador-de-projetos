@@ -4,10 +4,17 @@ import type { ResponsavelResponse } from 'src/types/responsavel/responsavelRespo
 import { responsavelService } from '../../services/responsavelService';
 import { ResponsavelTable } from './ResponsavelTable';
 import { ResponsavelForm } from './ResponsavelForm';
+import { ResponsavelFilters } from './ResponsavelFilters';
 import { Pagination } from '../Pagination/Pagination';
+
+interface Filters {
+  cargo: string;
+  search: string;
+}
 
 export const ResponsavelList: React.FC = () => {
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
+  const [allResponsaveis, setAllResponsaveis] = useState<ResponsavelResponse[]>([]); // Para filtros
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -18,12 +25,28 @@ export const ResponsavelList: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
 
+  // Estados de filtros
+  const [filters, setFilters] = useState<Filters>({
+    cargo: '',
+    search: ''
+  });
+
+  // Carregar todos os responsáveis para filtros (sem paginação)
+  const carregarTodosResponsaveis = async () => {
+    try {
+      const response = await responsavelService.listarTodos();
+      setAllResponsaveis(response);
+    } catch (err) {
+      console.error('Erro ao carregar responsáveis para filtros:', err);
+    }
+  };
+
+  // Carregar responsáveis paginados
   const carregarResponsaveis = async (pageNum: number = page) => {
     try {
       setLoading(true);
       const response = await responsavelService.listarPaginado(pageNum, pageSize);
       
-      // Estrutura padrão do Spring Data
       setResponsaveis(response.content);
       setTotalElements(response.totalElements);
       setError(null);
@@ -37,7 +60,48 @@ export const ResponsavelList: React.FC = () => {
 
   useEffect(() => {
     carregarResponsaveis();
+    carregarTodosResponsaveis(); // Carrega todos para os filtros
   }, [page, pageSize]);
+
+  // Aplicar filtros localmente na lista completa
+  const aplicarFiltros = () => {
+    let filtered = [...allResponsaveis];
+
+    // Filtro por cargo
+    if (filters.cargo) {
+      filtered = filtered.filter(responsavel => 
+        responsavel.cargo?.toLowerCase() === filters.cargo.toLowerCase()
+      );
+    }
+
+    // Filtro de busca (nome, email, cargo)
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(responsavel =>
+        responsavel.nome?.toLowerCase().includes(searchLower) ||
+        responsavel.email?.toLowerCase().includes(searchLower) ||
+        responsavel.cargo?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return filtered;
+  };
+
+  // Responsáveis filtrados
+  const responsaveisFiltrados = aplicarFiltros();
+  const hasActiveFilters = filters.cargo !== '' || filters.search !== '';
+
+  // Obter lista de cargos únicos para o dropdown
+  const cargosUnicos = [...new Set(allResponsaveis
+    .map(r => r.cargo)
+    .filter(Boolean) // Remove valores nulos/vazios
+    .sort() // Ordena alfabeticamente
+  )] as string[];
+
+  const handleFilterChange = (newFilters: Filters) => {
+    setFilters(newFilters);
+    setPage(0); // Reset para primeira página ao filtrar
+  };
 
   const handleCreate = () => {
     setEditingResponsavel(null);
@@ -53,12 +117,9 @@ export const ResponsavelList: React.FC = () => {
     if (window.confirm('Tem certeza que deseja excluir este responsável?')) {
       try {
         await responsavelService.excluir(id);
-        // Volta para a primeira página após exclusão para evitar página vazia
-        if (responsaveis.length === 1 && page > 0) {
-          setPage(page - 1);
-        } else {
-          await carregarResponsaveis();
-        }
+        // Recarrega ambas as listas
+        await carregarResponsaveis();
+        await carregarTodosResponsaveis();
       } catch (error) {
         alert('Erro ao excluir responsável: ' + (error as Error).message);
       }
@@ -68,7 +129,9 @@ export const ResponsavelList: React.FC = () => {
   const handleFormSuccess = () => {
     setIsFormOpen(false);
     setEditingResponsavel(null);
+    // Recarrega ambas as listas
     carregarResponsaveis();
+    carregarTodosResponsaveis();
   };
 
   const handleFormClose = () => {
@@ -87,9 +150,10 @@ export const ResponsavelList: React.FC = () => {
 
   const handleRefresh = () => {
     carregarResponsaveis();
+    carregarTodosResponsaveis();
   };
 
-  if (loading) {
+  if (loading && responsaveis.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex flex-col items-center">
@@ -124,9 +188,9 @@ export const ResponsavelList: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Gestão de Responsáveis</h1>
           <p className="text-gray-600">
-            {totalElements > 0 
-              ? `${totalElements} responsável(eis) cadastrado(s)` 
-              : 'Nenhum responsável cadastrado'
+            {hasActiveFilters 
+              ? `${responsaveisFiltrados.length} responsável(eis) encontrado(s)` 
+              : `${totalElements} responsável(eis) cadastrado(s)`
             }
           </p>
         </div>
@@ -140,15 +204,25 @@ export const ResponsavelList: React.FC = () => {
         </button>
       </div>
 
+      {/* Componente de Filtros */}
+      <ResponsavelFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        responsavelCount={hasActiveFilters ? responsaveisFiltrados.length : totalElements}
+        totalCount={hasActiveFilters ? totalElements : undefined}
+        availableCargos={cargosUnicos}
+      />
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Tabela com responsáveis paginados ou filtrados */}
         <ResponsavelTable 
-          responsaveis={responsaveis}
+          responsaveis={hasActiveFilters ? responsaveisFiltrados : responsaveis}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
         
-        {/* Paginação - só mostra se tiver elementos */}
-        {totalElements > 0 && (
+        {/* Paginação - só mostra se não estiver filtrando e tiver elementos */}
+        {!hasActiveFilters && totalElements > 0 && (
           <Pagination
             currentPage={page}
             totalPages={totalPages}
@@ -158,6 +232,13 @@ export const ResponsavelList: React.FC = () => {
             onPageSizeChange={handlePageSizeChange}
             itemsName="responsáveis"
           />
+        )}
+
+        {/* Mensagem quando filtros não retornam resultados */}
+        {hasActiveFilters && responsaveisFiltrados.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            Nenhum responsável encontrado com os filtros aplicados.
+          </div>
         )}
       </div>
 
